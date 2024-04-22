@@ -41,7 +41,7 @@ public class OllamaClientAgent : IStreamingAgent
         ChatMessageRequest request = await BuildChatRequest(messages, options);
         request.Stream = false;
         using (HttpResponseMessage? response = await _httpClient
-                   .SendAsync(HttpRequestContent(request), HttpCompletionOption.ResponseContentRead, cancellation))
+                   .SendAsync(BuildRequestMessage(request), HttpCompletionOption.ResponseContentRead, cancellation))
         {
             response.EnsureSuccessStatusCode();
             CompleteChatMessage reply = await response.Content
@@ -64,8 +64,8 @@ public class OllamaClientAgent : IStreamingAgent
     private async IAsyncEnumerable<IStreamingMessage> StreamMessagesAsync(
         ChatMessageRequest request, [EnumeratorCancellation] CancellationToken cancellation)
     {
-        HttpRequestMessage content = HttpRequestContent(request);
-        using (HttpResponseMessage? response = await _httpClient.SendAsync(content, HttpCompletionOption.ResponseHeadersRead, cancellation))
+        HttpRequestMessage message = BuildRequestMessage(request);
+        using (HttpResponseMessage? response = await _httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellation))
         {
             response.EnsureSuccessStatusCode();
             using Stream? stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -82,7 +82,8 @@ public class OllamaClientAgent : IStreamingAgent
                     yield return new MessageEnvelope<ChatMessage>(update, from: Name);
                 }
 
-                if (!update!.Done) continue;
+                if (update is { Done: false }) continue;
+
                 CompleteChatMessage? chatMessage = JsonSerializer.Deserialize<CompleteChatMessage>(line);
                 if (chatMessage == null) continue;
                 yield return new MessageEnvelope<CompleteChatMessage>(chatMessage, from: Name);
@@ -99,17 +100,17 @@ public class OllamaClientAgent : IStreamingAgent
 
         if (_replyOptions != null)
         {
-            BuildChatRequestAdvancedOptions(_replyOptions, request);
+            BuildChatRequestOptions(_replyOptions, request);
             return request;
         }
         if (options is not OllamaReplyOptions replyOptions) return request;
-        BuildChatRequestAdvancedOptions(replyOptions, request);
+        BuildChatRequestOptions(replyOptions, request);
         return request;
     }
 
-    private static void BuildChatRequestAdvancedOptions(OllamaReplyOptions replyOptions, ChatMessageRequest request)
+    private static void BuildChatRequestOptions(OllamaReplyOptions replyOptions, ChatMessageRequest request)
     {
-        request.Format = replyOptions.Format;
+        request.Format = replyOptions.Format == FormatType.Json ? OllamaConsts.JsonFormatType : string.Empty;
         request.Template = replyOptions.Template;
         request.KeepAlive = replyOptions.KeepAlive;
         request.Options.Temperature = replyOptions.Temperature;
@@ -173,7 +174,7 @@ public class OllamaClientAgent : IStreamingAgent
 
         return collection;
     }
-    private static HttpRequestMessage HttpRequestContent(ChatMessageRequest request)
+    private static HttpRequestMessage BuildRequestMessage(ChatMessageRequest request)
     {
         return new HttpRequestMessage(HttpMethod.Post, OllamaConsts.ChatCompletionEndpoint)
         {
@@ -182,8 +183,14 @@ public class OllamaClientAgent : IStreamingAgent
     }
     private async Task<string> ImageUrlToBase64(string imageUrl)
     {
-        byte[]? imageBytes = await _httpClient.GetByteArrayAsync(imageUrl);
-        return Convert.ToBase64String(imageBytes);
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            throw new ArgumentException("required parameter", nameof(imageUrl));
+        }
+        byte[] imageBytes = await _httpClient.GetByteArrayAsync(imageUrl);
+        return imageBytes != null
+            ? Convert.ToBase64String(imageBytes)
+            : throw new InvalidOperationException("no image byte array");
     }
 
 }

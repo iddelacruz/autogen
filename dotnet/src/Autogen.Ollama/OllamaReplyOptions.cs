@@ -5,22 +5,23 @@ using AutoGen.Core;
 
 namespace Autogen.Ollama;
 
+public enum FormatType
+{
+    None,
+    Json
+}
+
 public class OllamaReplyOptions : GenerateReplyOptions
 {
     /// <summary>
-    /// the format to return a response in. Currently the only accepted value is json
+    /// the format to return a response in. Currently, the only accepted value is json
     /// </summary>
-    public string Format { get; set; } = string.Empty;
+    public FormatType Format { get; set; } = FormatType.None;
 
     /// <summary>
     /// the prompt template to use (overrides what is defined in the Modelfile)
     /// </summary>
     public string Template { get; set; } = string.Empty;
-
-    /// <summary>
-    /// if false the response will be returned as a single response object, rather than a stream of objects
-    /// </summary>
-    public bool Stream { get; set; } = false;
 
     /// <summary>
     /// The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)
