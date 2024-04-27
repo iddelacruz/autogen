@@ -16,6 +16,9 @@ using AutoGen.Core;
 
 namespace Autogen.Ollama;
 
+/// <summary>
+/// An agent that can interact with ollama models.
+/// </summary>
 public class OllamaClientAgent : IStreamingAgent
 {
     private readonly HttpClient _httpClient;
@@ -34,9 +37,8 @@ public class OllamaClientAgent : IStreamingAgent
         _systemMessage = systemMessage;
         _replyOptions = replyOptions;
     }
-
-    public async Task<IMessage> GenerateReplyAsync(IEnumerable<IMessage> messages, GenerateReplyOptions? options = null,
-        CancellationToken cancellation = default)
+    public async Task<IMessage> GenerateReplyAsync(
+        IEnumerable<IMessage> messages, GenerateReplyOptions? options = null, CancellationToken cancellation = default)
     {
         ChatMessageRequest request = await BuildChatRequest(messages, options);
         request.Stream = false;
@@ -60,7 +62,6 @@ public class OllamaClientAgent : IStreamingAgent
         request.Stream = true;
         return StreamMessagesAsync(request, cancellation);
     }
-
     private async IAsyncEnumerable<IStreamingMessage> StreamMessagesAsync(
         ChatMessageRequest request, [EnumeratorCancellation] CancellationToken cancellation)
     {
@@ -98,19 +99,22 @@ public class OllamaClientAgent : IStreamingAgent
             Messages = await BuildChatHistory(messages)
         };
 
+        if (options is OllamaReplyOptions replyOptions)
+        {
+            BuildChatRequestOptions(replyOptions, request);
+            return request;
+        }
+
         if (_replyOptions != null)
         {
             BuildChatRequestOptions(_replyOptions, request);
             return request;
         }
-        if (options is not OllamaReplyOptions replyOptions) return request;
-        BuildChatRequestOptions(replyOptions, request);
         return request;
     }
-
-    private static void BuildChatRequestOptions(OllamaReplyOptions replyOptions, ChatMessageRequest request)
+    private void BuildChatRequestOptions(OllamaReplyOptions replyOptions, ChatMessageRequest request)
     {
-        request.Format = replyOptions.Format == FormatType.Json ? OllamaConsts.JsonFormatType : string.Empty;
+        request.Format = replyOptions.Format == FormatType.Json ? OllamaConsts.JsonFormatType : null;
         request.Template = replyOptions.Template;
         request.KeepAlive = replyOptions.KeepAlive;
         request.Options.Temperature = replyOptions.Temperature;
@@ -174,11 +178,13 @@ public class OllamaClientAgent : IStreamingAgent
 
         return collection;
     }
+
     private static HttpRequestMessage BuildRequestMessage(ChatMessageRequest request)
     {
+        var serialized = JsonSerializer.Serialize(request);
         return new HttpRequestMessage(HttpMethod.Post, OllamaConsts.ChatCompletionEndpoint)
         {
-            Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, OllamaConsts.JsonMediaType)
+            Content = new StringContent(serialized, Encoding.UTF8, OllamaConsts.JsonMediaType)
         };
     }
     private async Task<string> ImageUrlToBase64(string imageUrl)
@@ -192,5 +198,4 @@ public class OllamaClientAgent : IStreamingAgent
             ? Convert.ToBase64String(imageBytes)
             : throw new InvalidOperationException("no image byte array");
     }
-
 }

@@ -17,23 +17,9 @@ public class OllamaMessageConnector : IMiddleware, IStreamingMiddleware
         CancellationToken cancellationToken = default)
     {
         IEnumerable<IMessage> messages = context.Messages;
-
         IMessage reply = await agent.GenerateReplyAsync(messages, context.Options, cancellationToken);
-        return PostProcessMessage(reply);
-
-        static TextMessage PostProcessMessage(IMessage input)
-        {
-            switch (input)
-            {
-                case IMessage<CompleteChatMessage> messageEnvelope:
-                    Message? message = messageEnvelope.Content.Message;
-                    return new TextMessage(Role.Assistant, message != null ? message.Value : "EMPTY_CONTENT", messageEnvelope.From);
-                default:
-                    throw new NotImplementedException();
-            }
-        }
+        return PostProcessMessage(reply, context);
     }
-
 
     public async Task<IAsyncEnumerable<IStreamingMessage>> InvokeAsync(MiddlewareContext context, IStreamingAgent agent,
         CancellationToken cancellationToken = default)
@@ -63,6 +49,17 @@ public class OllamaMessageConnector : IMiddleware, IStreamingMiddleware
                         throw new InvalidOperationException("Message type not supported.");
                 }
             }
+        }
+    }
+    private static TextMessage PostProcessMessage(IMessage input, MiddlewareContext context)
+    {
+        switch (input)
+        {
+            case IMessage<CompleteChatMessage> messageEnvelope:
+                Message? message = messageEnvelope.Content.Message;
+                return new TextMessage(Role.Assistant, message != null ? message.Value : "EMPTY_CONTENT", messageEnvelope.From);
+            default:
+                throw new NotSupportedException();
         }
     }
 }

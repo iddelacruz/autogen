@@ -26,7 +26,7 @@ public class ChatMessageRequest
     /// </summary>
     [JsonPropertyName("format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string Format { get; set; } = string.Empty;
+    public string? Format { get; set; }
 
     /// <summary>
     /// additional model parameters listed in the documentation for the Modelfile such as temperature
@@ -39,7 +39,7 @@ public class ChatMessageRequest
     /// </summary>
     [JsonPropertyName("template")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string Template { get; set; } = string.Empty;
+    public string? Template { get; set; }
     /// <summary>
     /// if false the response will be returned as a single response object, rather than a stream of objects
     /// </summary>
@@ -50,5 +50,5 @@ public class ChatMessageRequest
     /// </summary>
     [JsonPropertyName("keep_alive")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string KeepAlive { get; set; } = string.Empty;
+    public string? KeepAlive { get; set; }
 }

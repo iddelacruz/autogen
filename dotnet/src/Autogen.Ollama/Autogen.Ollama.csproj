@@ -9,10 +9,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Extension\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
     </ItemGroup>
 

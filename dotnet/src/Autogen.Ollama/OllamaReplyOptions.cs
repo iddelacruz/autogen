@@ -26,7 +26,7 @@ public class OllamaReplyOptions : GenerateReplyOptions
     /// <summary>
     /// The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)
     /// </summary>
-	public new float? Temperature { get; set; }
+    public new float? Temperature { get; set; }
 
     /// <summary>
     ///  controls how long the model will stay loaded into memory following the request (default: 5m)
