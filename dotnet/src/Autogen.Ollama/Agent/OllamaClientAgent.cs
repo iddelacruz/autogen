@@ -181,7 +181,7 @@ public class OllamaClientAgent : IStreamingAgent
 
     private static HttpRequestMessage BuildRequestMessage(ChatMessageRequest request)
     {
-        var serialized = JsonSerializer.Serialize(request);
+        string serialized = JsonSerializer.Serialize(request);
         return new HttpRequestMessage(HttpMethod.Post, OllamaConsts.ChatCompletionEndpoint)
         {
             Content = new StringContent(serialized, Encoding.UTF8, OllamaConsts.JsonMediaType)

@@ -96,7 +96,7 @@ public class ModelReplyOptions
     /// </summary>
     [JsonPropertyName("stop")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Stop { get; set; } = string.Empty;
+    public string? Stop { get; set; }
 
     /// <summary>
     /// Tail free sampling is used to reduce the impact of less probable tokens from the output.

@@ -31,7 +31,7 @@ public class OllamaReplyOptions : GenerateReplyOptions
     /// <summary>
     ///  controls how long the model will stay loaded into memory following the request (default: 5m)
     /// </summary>
-    public string KeepAlive { get; set; } = string.Empty;
+    public string? KeepAlive { get; set; }
 
     /// <summary>
     /// Enable Mirostat sampling for controlling perplexity. (default: 0, 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0)
